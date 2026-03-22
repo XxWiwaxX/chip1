@@ -8,22 +8,44 @@ You can also include images in this folder and reference them in the markdown. E
 -->
 
 ## How it works
+This ALU is a **sequential logic** circuit. Unlike a combinational ALU, the result of the calculation is captured in an internal 8-bit register on the rising edge of the `clk` signal.
 
-This project is an 8-bit Synchronous Arithmetic Logic Unit (ALU). It is designed to perform various mathematical and logical operations on two input numbers ($A$ and $B$) and store the result in an internal register on every clock cycle.The ALU uses a 3-bit OpCode (operation selector) to determine the function. Because of the limited pin count on a single Tiny Tapeout tile, the inputs are split as follows:Input A: 5-bit value (using the lower bits of ui_in).Input B: 8-bit value (using the uio_in bidirectional pins).OpCode: 3-bit selector (using the upper bits of ui_in).
-OpCode (Binary),Operation,Description
-000,ADD,A+B
-001,SUB,A−B
-010,AND,Bitwise AND
-011,OR,Bitwise OR
-100,XOR,Bitwise XOR
-101,NOT,Invert bits of A
-110,SHL,Shift A left by 1 bit
-111,SHR,Shift A right by 1 bit
+### Input Mapping
+Due to the 8-pin input limitation per tile, the inputs are mapped as follows:
+* **Operand A (`ui_in[4:0]`)**: A 5-bit unsigned integer.
+* **OpCode (`ui_in[7:5]`)**: A 3-bit selector that determines the mathematical function.
+* **Operand B (`uio_in[7:0]`)**: A full 8-bit unsigned integer.
+
+### Internal Logic
+The core consists of an 8-to-1 Multiplexer (MUX) that selects between different functional units (Adder, Subtractor, Shifters, and Bitwise operators). The result is synchronized to the clock to ensure glitch-free output.
+
+| OpCode | Mnemonic | Operation | Description |
+| :--- | :--- | :--- | :--- |
+| `000` | ADD | $A + B$ | Arithmetic Addition |
+| `001` | SUB | $A - B$ | Arithmetic Subtraction |
+| `010` | AND | $A \text{ & } B$ | Bitwise Logical AND |
+| `011` | OR  | $A \text{ | } B$ | Bitwise Logical OR |
+| `100` | XOR | $A \text{ ^ } B$ | Bitwise Logical XOR |
+| `101` | NOT | $~A$ | Bitwise Inversion of A |
+| `110` | SHL | $A \ll 1$ | Logical Shift Left |
+| `111` | SHR | $A \gg 1$ | Logical Shift Right |
 
 ## How to test
+To operate the ALU on the hardware:
+1. **Initialize:** Set `rst_n` to LOW to clear the internal register, then set it HIGH to enable operation.
+2. **Select Operation:** Toggle pins `ui[7]`, `ui[6]`, and `ui[5]` to set your OpCode (e.g., `000` for ADD).
+3. **Input Data:** - Set your first number on `ui[4:0]`.
+   - Set your second number on the bidirectional pins `uio[7:0]`.
+4. **Trigger:** Provide a clock pulse to the `clk` pin. The result will appear on `uo_out[7:0]` immediately following the rising edge.
 
-To test the ALU, you will need to provide a clock signal and set the input pins.Reset: Pull rst_n (Reset) Low for at least one clock cycle to clear the internal register, then pull it High to start.Set Operation: Set the top three bits of ui_in (ui[7:5]) to the desired OpCode (e.g., 000 for Addition).Provide Data: * Set the bottom five bits of ui_in (ui[4:0]) for Operand $A$.Set the eight uio_in pins for Operand $B$.Clock it: Pulse the clk pin. On the rising edge, the result of the operation will be stored and appear on the output pins uo_out[7:0].
+## Pinout
+
+| Pin | Name | Description |
+| :--- | :--- | :--- |
+| **ui[7:5]** | OpCode | Selects the ALU function |
+| **ui[4:0]** | A_in | Input Operand A (5 bits) |
+| **uo[7:0]** | ALU_out | 8-bit Registered Result |
+| **uio[7:0]**| B_in | Input Operand B (8 bits) |
 
 ## External hardware
-
-No specialized external hardware is required. The design can be tested using:Dip Switches: To manually set the inputs for $A$, $B$, and the OpCode.LEDs: To visualize the 8-bit output result on uo_out.Logic Analyzer: To verify high-speed timing and transitions.
+No specialized external hardware is required. This project is compatible with the standard Tiny Tapeout demo board using the onboard switches for inputs and LEDs for the 8-bit output display.
