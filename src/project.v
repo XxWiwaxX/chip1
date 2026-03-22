@@ -5,7 +5,7 @@
 
 `default_nettype none
 
-module ws_reg_alu (
+module tt_um_ws_reg_alu (
     input  wire [7:0] ui_in,    // Data Input A
     output wire [7:0] uo_out,   // Registered ALU Result
     input  wire [7:0] uio_in,   // Data Input B
